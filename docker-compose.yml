@@ -17,7 +17,7 @@ services:
   # PostgreSQL 18 + pgvector
   # ---------------------------------------------------------------------------
   postgres:
-    image: pgvector/pgvector:pg18@sha256:3c37093adf11a0b7188081df5b6af115a5c096a694021b4114e8e352d2e85d97
+    image: pgvector/pgvector:${POSTGRES_VERSION:-pg18}
     container_name: appflowy-postgres
     user: "1000:1000"
     environment:
@@ -68,7 +68,7 @@ services:
   # Dragonfly (Redis-compatible cache, password-protected)
   # ---------------------------------------------------------------------------
   dragonfly:
-    image: docker.dragonflydb.io/dragonflydb/dragonfly:v1.36.0@sha256:af221b68138afb0b0238401c335493cfc2b060d577c5d6c018ddf6a29d3119f9
+    image: docker.dragonflydb.io/dragonflydb/dragonfly:${DRAGONFLY_VERSION:-v1.36.0}
     container_name: appflowy-dragonfly
     user: "1000:1000"
     command:
@@ -115,7 +115,7 @@ services:
   # MinIO (S3-compatible object storage)
   # ---------------------------------------------------------------------------
   minio:
-    image: minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
+    image: minio/minio:${MINIO_VERSION:-RELEASE.2025-09-07T16-13-09Z}
     container_name: appflowy-minio
     user: "1000:1000"
     command: server /data
@@ -159,7 +159,7 @@ services:
   # GoTrue (authentication)
   # ---------------------------------------------------------------------------
   gotrue:
-    image: appflowyinc/gotrue:0.12.0@sha256:306c5d6b40aa595111d6b729c96aa5a260b1a525a3e46b1d8be0462cbc07db80
+    image: appflowyinc/gotrue:${APPFLOWY_VERSION:-0.12.0}
     container_name: appflowy-gotrue
     user: "1000:1000"
     environment:
@@ -173,7 +173,7 @@ services:
       GOTRUE_JWT_ADMIN_GROUP_NAME: supabase_admin
       # Site / URI
       GOTRUE_SITE_URL: appflowy-flutter://
-      GOTRUE_URI_ALLOW_LIST: "**"
+      GOTRUE_URI_ALLOW_LIST: "${APPFLOWY_BASE_URL}/**,appflowy-flutter://**"
       API_EXTERNAL_URL: ${API_EXTERNAL_URL}
       # Admin
       GOTRUE_ADMIN_EMAIL: ${GOTRUE_ADMIN_EMAIL}
@@ -181,7 +181,7 @@ services:
       # Signup
       GOTRUE_DISABLE_SIGNUP: ${GOTRUE_DISABLE_SIGNUP}
       GOTRUE_MAILER_AUTOCONFIRM: ${GOTRUE_MAILER_AUTOCONFIRM}
-      GOTRUE_RATE_LIMIT_EMAIL_SENT: ${GOTRUE_RATE_LIMIT_EMAIL_SENT:-100}
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: ${GOTRUE_RATE_LIMIT_EMAIL_SENT:-30}
       # Mailer URL paths
       GOTRUE_MAILER_URLPATHS_CONFIRMATION: /gotrue/verify
       GOTRUE_MAILER_URLPATHS_INVITE: /gotrue/verify
@@ -193,7 +193,7 @@ services:
       GOTRUE_SMTP_USER: ${GOTRUE_SMTP_USER}
       GOTRUE_SMTP_PASS: ${GOTRUE_SMTP_PASS}
       GOTRUE_SMTP_ADMIN_EMAIL: ${GOTRUE_SMTP_ADMIN_EMAIL}
-      GOTRUE_SMTP_MAX_FREQUENCY: 1ns
+      GOTRUE_SMTP_MAX_FREQUENCY: ${GOTRUE_SMTP_MAX_FREQUENCY:-1m}
       # OAuth (disabled by default)
       GOTRUE_EXTERNAL_GOOGLE_ENABLED: ${GOTRUE_EXTERNAL_GOOGLE_ENABLED:-false}
       GOTRUE_EXTERNAL_GITHUB_ENABLED: ${GOTRUE_EXTERNAL_GITHUB_ENABLED:-false}
@@ -237,7 +237,7 @@ services:
   # AppFlowy Cloud (backend API + WebSocket)
   # ---------------------------------------------------------------------------
   appflowy_cloud:
-    image: appflowyinc/appflowy_cloud:0.12.0@sha256:d8c82089cc51115dea3f148278acd240a19cca5050d5868862b74a2ab04f00ec
+    image: appflowyinc/appflowy_cloud:${APPFLOWY_VERSION:-0.12.0}
     container_name: appflowy-cloud
     user: "1000:1000"
     environment:
@@ -318,7 +318,7 @@ services:
   # AppFlowy Worker (background tasks)
   # ---------------------------------------------------------------------------
   appflowy_worker:
-    image: appflowyinc/appflowy_worker:0.12.0@sha256:eca5db527c5a15b1d0e860f1807d9b9431f5b0149677c29d3fa233fcedd58507
+    image: appflowyinc/appflowy_worker:${APPFLOWY_VERSION:-0.12.0}
     container_name: appflowy-worker
     user: "1000:1000"
     environment:
@@ -377,7 +377,7 @@ services:
   # AppFlowy Web (web UI) - custom nginx.conf for non-root operation
   # ---------------------------------------------------------------------------
   appflowy_web:
-    image: appflowyinc/appflowy_web:0.10.5@sha256:c519ac5b95624647b34a1bc14d26586f3dc2f8309ce547ad61cbce7d118f43e9
+    image: appflowyinc/appflowy_web:${APPFLOWY_WEB_VERSION:-0.10.5}
     container_name: appflowy-web
     user: "1000:1000"
     environment:
@@ -426,7 +426,7 @@ services:
   # Admin Frontend (admin dashboard)
   # ---------------------------------------------------------------------------
   admin_frontend:
-    image: appflowyinc/admin_frontend:0.12.0@sha256:592bd5400d841a8dc10300bd0a81912ea90480dc42374a28c05dd256fb6c50e9
+    image: appflowyinc/admin_frontend:${APPFLOWY_VERSION:-0.12.0}
     container_name: appflowy-admin
     user: "1000:1000"
     environment:
@@ -466,7 +466,7 @@ services:
   # Angie (internal reverse proxy, nginx-compatible)
   # ---------------------------------------------------------------------------
   angie:
-    image: docker.angie.software/angie:1.11.3-alpine@sha256:1dab21d9311c3a2d97e90276a69fe94218c3f3cf1bf9696ea0dbc093dd93fc44
+    image: docker.angie.software/angie:${ANGIE_VERSION:-1.11.3-alpine}
     container_name: appflowy-angie
     user: "1000:1000"
     ports:

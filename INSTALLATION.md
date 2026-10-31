@@ -237,80 +237,81 @@ For servers with less than 8 GB RAM, you may want to reduce limits on `postgres`
 
 ## Upgrading
 
-The easiest way to upgrade is to re-run the setup script:
+### One-Command Interactive Upgrade (Recommended)
+
+Run the interactive upgrade script:
 
 ```bash
-bash setup.sh
-docker compose up -d
+bash update.sh
 ```
 
-The script detects the existing `.env`, stops containers, pulls new images, re-extracts assets, and sets ownership. It skips all prompts and preserves your configuration.
+The script will:
+1. Query official Docker Hub releases for `appflowyinc/appflowy_cloud`.
+2. Display an interactive menu with available versions (the latest version is default).
+3. Check and match the companion `appflowyinc/appflowy_web` version.
+4. Create an automatic pre-update safety backup of PostgreSQL.
+5. Update version variables in `.env`.
+6. Pull new images, re-extract frontend assets, and restart the stack (`docker compose up -d`).
 
-**To update to new image versions:** Edit the `image:` lines in `docker-compose.yml` with the new version tags and SHA256 digests before running `setup.sh`. The pinned digests ensure you get exactly the image you expect.
+### Manual Upgrade
 
-<details>
-<summary>Manual upgrade steps</summary>
+Alternatively, edit version numbers in `.env`:
 
 ```bash
-docker compose down
-docker compose pull
-
-rm -rf appflowy-web-html appflowy-web-dist admin-frontend-app
-
-cid=$(docker create appflowyinc/appflowy_web:0.10.5)
-docker cp "$cid:/usr/share/nginx/html" ./appflowy-web-html
-docker cp "$cid:/app/dist" ./appflowy-web-dist
-docker rm "$cid"
-
-cid=$(docker create appflowyinc/admin_frontend:0.12.0)
-mkdir -p ./admin-frontend-app
-docker cp "$cid:/app/." ./admin-frontend-app/
-docker rm "$cid"
-
-chown -R $(id -u):$(id -g) appflowy-web-html appflowy-web-dist admin-frontend-app
-
-docker compose up -d
+# In .env
+APPFLOWY_VERSION=0.13.0
+APPFLOWY_WEB_VERSION=0.11.0
 ```
 
-</details>
+Then run `bash setup.sh && docker compose up -d`.
 
-## Backups
+---
 
-Critical data to back up regularly:
+## Backups & Google Drive Sync
 
-| Directory | Contains | Priority |
-|-----------|----------|----------|
-| `postgres-data/` | All user data, workspaces, documents | **Critical** |
-| `minio-data/` | Uploaded files, attachments, images | **Critical** |
-| `.env` | Configuration and all secrets | **Critical** |
-| `dragonfly-data/` | Cache (rebuilt automatically on restart) | Low |
+This repository includes an automated, production-grade backup script: `backup.sh`.
 
-### PostgreSQL Backup
+### What `backup.sh` Does:
+1. **Hot PostgreSQL Dump:** Performs a consistent `pg_dump` without stopping containers.
+2. **Package Archive:** Compresses database dump, `minio-data` (attachments/files), and `.env` configuration.
+3. **AES-256 Symmetric Encryption:** Encrypts the entire archive using `gpg` with `BACKUP_ENCRYPTION_PASSPHRASE`.
+4. **Google Drive Sync:** Uploads the encrypted archive to your Google Drive remote using `rclone`.
+5. **Retention Policy:** Automatically deletes local and Google Drive backups older than `BACKUP_RETENTION_DAYS` (default: 30 days).
 
+### Configuring Google Drive (rclone):
+1. Install rclone:
+   ```bash
+   sudo apt-get install -y rclone gnupg
+   ```
+2. Configure Google Drive remote:
+   ```bash
+   rclone config
+   # Choose 'n' for new remote -> Name it 'gdrive' -> Choose 'Google Drive' -> Follow prompts
+   ```
+3. Test remote connection:
+   ```bash
+   rclone lsd gdrive:
+   ```
+4. Configure `.env`:
+   ```bash
+   BACKUP_DIR=./backups
+   BACKUP_RETENTION_DAYS=30
+   GDRIVE_REMOTE=gdrive:AppFlowy-Backups
+   BACKUP_ENCRYPTION_PASSPHRASE=your_secret_passphrase
+   ```
+
+### Running Backups Manually:
 ```bash
-# SQL dump (recommended for portability)
-docker compose exec postgres pg_dump -U appflowy appflowy > backup_$(date +%Y%m%d).sql
-
-# Restore from dump
-docker compose exec -T postgres psql -U appflowy appflowy < backup_20250101.sql
+bash backup.sh
 ```
 
-### MinIO Backup
-
-```bash
-# Simple copy (while containers are stopped for consistency)
-docker compose down
-cp -r minio-data/ minio-data-backup-$(date +%Y%m%d)/
-docker compose up -d
+### Automating via Cron (Daily at 3:00 AM):
+Add a cron job with `crontab -e`:
+```cron
+0 3 * * * /bin/bash /path/to/appflowy-wrapper/backup.sh >> /var/log/appflowy-backup.log 2>&1
 ```
 
-### Full Backup Strategy
-
-For production deployments, implement automated daily backups:
-1. PostgreSQL: daily `pg_dump` with 30-day retention
-2. MinIO: rsync or rclone to offsite storage
-3. `.env`: include in your secrets management system
-4. Encrypt all backups at rest (e.g., `gpg --symmetric`)
+---
 
 ## Enabling OAuth
 

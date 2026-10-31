@@ -165,9 +165,11 @@ These values are tuned for a small-to-medium team deployment (5-50 users). For l
 
 ```
 appflowy/
-  docker-compose.yml          # Main compose (9 services, 4 networks, pinned images)
+  docker-compose.yml          # Main compose (9 services, 4 networks, parameterized versions)
   .env.example                # Configuration template with documentation
   setup.sh                    # Interactive setup + upgrade script
+  update.sh                   # Interactive one-command version updater (Docker Hub API)
+  backup.sh                   # Automated encrypted backup to Google Drive (GPG + rclone)
   angie/angie.conf            # Internal reverse proxy config (Angie/nginx)
   appflowy-web/nginx.conf     # Non-root nginx config for web UI container
   INSTALLATION.md             # Full installation, upgrade, and backup guide
