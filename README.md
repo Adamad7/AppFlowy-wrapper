@@ -31,7 +31,7 @@ Internet -> Reverse Proxy (TLS) -> 127.0.0.1:8025 -> Angie -> AppFlowy Services
 | `/ws` | appflowy_cloud | WebSocket (realtime collaboration) |
 | `/gotrue/` | gotrue | Authentication (signup, login, OAuth) |
 | `/console` | admin_frontend | Admin dashboard |
-| `/minio-api/` | minio | S3 API (presigned URL downloads) |
+| `/minio-api/` | rustfs | S3 API (presigned URL downloads) |
 
 ## Services (9 containers)
 
@@ -39,7 +39,7 @@ Internet -> Reverse Proxy (TLS) -> 127.0.0.1:8025 -> Angie -> AppFlowy Services
 |---------|-------|---------|---------|
 | **postgres** | `pgvector/pgvector` | pg18 | Database with vector search (AI features) |
 | **dragonfly** | `dragonflydb/dragonfly` | v1.36.0 | Redis-compatible cache (password-protected) |
-| **minio** | `minio/minio` | 2025-09-07 | S3-compatible object storage |
+| **rustfs** | `rustfs/rustfs` | latest | High-performance S3-compatible object storage in Rust |
 | **gotrue** | `appflowyinc/gotrue` | 0.12.0 | Authentication (signup disabled by default) |
 | **appflowy_cloud** | `appflowyinc/appflowy_cloud` | 0.12.0 | Backend API + WebSocket server |
 | **appflowy_worker** | `appflowyinc/appflowy_worker` | 0.12.0 | Background tasks (imports, jobs) |
@@ -128,7 +128,7 @@ Every container has explicit memory, CPU, and PID limits to prevent resource exh
 |---------|-------------|-----------------|------|-----------|
 | postgres | 4 GB | 512 MB | 4.0 | 200 |
 | dragonfly | 2 GB | 256 MB | 2.0 | 100 |
-| minio | 2 GB | 256 MB | 2.0 | 150 |
+| rustfs | 1 GB | 128 MB | 2.0 | 150 |
 | gotrue | 512 MB | 64 MB | 2.0 | 100 |
 | appflowy_cloud | 4 GB | 256 MB | 4.0 | 300 |
 | appflowy_worker | 2 GB | 128 MB | 2.0 | 200 |
@@ -180,7 +180,7 @@ appflowy/
   .env                        # Active configuration with secrets
   postgres-data/              # PostgreSQL data (bind mount)
   dragonfly-data/             # Dragonfly cache data (bind mount)
-  minio-data/                 # MinIO object storage (bind mount)
+  rustfs-data/                # RustFS object storage data (bind mount)
   appflowy-web-html/          # Web UI static assets (extracted from image)
   appflowy-web-dist/          # Web UI dist files (extracted from image)
   admin-frontend-app/         # Admin frontend app (extracted from image)

@@ -26,7 +26,7 @@ The script will prompt for:
 4. **SMTP settings** — optional; if skipped, email autoconfirm is enabled so signup works without email
 5. **Signup** — disabled by default for security; enable if you want open registration
 
-All service passwords (PostgreSQL, Dragonfly, MinIO, JWT secret) are auto-generated using `openssl rand -hex` with cryptographically secure randomness. Passwords use hex encoding (not base64) to ensure they are URL-safe — this is critical because database connection strings embed passwords directly in URLs, and base64 characters like `/`, `+`, and `=` break URL parsing.
+All service passwords (PostgreSQL, Dragonfly, RustFS, JWT secret) are auto-generated using `openssl rand -hex` with cryptographically secure randomness. Passwords use hex encoding (not base64) to ensure they are URL-safe — this is critical because database connection strings embed passwords directly in URLs, and base64 characters like `/`, `+`, and `=` break URL parsing.
 
 When finished, start with:
 
@@ -48,10 +48,10 @@ For transparency, here is exactly what `setup.sh` does in each mode:
 1. Checks prerequisites (Docker, Compose V2, openssl)
 2. Detects your UID/GID and warns if running as root
 3. Prompts for domain, admin credentials, SMTP, and signup preference
-4. Generates secure passwords for PostgreSQL, Dragonfly, MinIO, and JWT
+4. Generates secure passwords for PostgreSQL, Dragonfly, RustFS, and JWT
 5. Updates `docker-compose.yml` to use your UID/GID (if not the default 1000:1000)
 6. Validates that config files (`angie/angie.conf`, `appflowy-web/nginx.conf`) exist and are files (not directories)
-7. Creates data directories (`postgres-data`, `dragonfly-data`, `minio-data`)
+7. Creates data directories (`postgres-data`, `dragonfly-data`, `rustfs-data`)
 8. Generates `.env` from the collected values (heredoc-based, no string escaping issues)
 9. Pulls all container images
 10. Extracts writable assets from `appflowy_web` and `admin_frontend` images (required for non-root operation)
@@ -105,7 +105,7 @@ The `uid=`/`gid=` values appear in tmpfs mount options (e.g., `/run/postgresql`,
 ### Step 3: Create Data Directories
 
 ```bash
-mkdir -p postgres-data dragonfly-data minio-data
+mkdir -p postgres-data dragonfly-data rustfs-data
 ```
 
 ### Step 4: Extract Writable Assets from Images
@@ -137,7 +137,7 @@ docker rm "$cid"
 ### Step 5: Set Ownership
 
 ```bash
-chown -R $(id -u):$(id -g) postgres-data dragonfly-data minio-data \
+chown -R $(id -u):$(id -g) postgres-data dragonfly-data rustfs-data \
   appflowy-web-html appflowy-web-dist admin-frontend-app
 ```
 
@@ -157,7 +157,7 @@ Edit `.env` and set **at minimum**:
 | `FQDN` | Your domain (e.g., `appflowy.example.com`) |
 | `POSTGRES_PASSWORD` | `openssl rand -hex 24` |
 | `DRAGONFLY_PASSWORD` | `openssl rand -hex 24` |
-| `MINIO_ROOT_PASSWORD` | `openssl rand -hex 24` |
+| `RUSTFS_SECRET_KEY` | `openssl rand -hex 24` |
 | `GOTRUE_ADMIN_EMAIL` | Your admin email |
 | `GOTRUE_ADMIN_PASSWORD` | Strong admin password |
 | `GOTRUE_JWT_SECRET` | `openssl rand -hex 32` |
@@ -273,7 +273,7 @@ This repository includes an automated, production-grade backup script: `backup.s
 
 ### What `backup.sh` Does:
 1. **Hot PostgreSQL Dump:** Performs a consistent `pg_dump` without stopping containers.
-2. **Package Archive:** Compresses database dump, `minio-data` (attachments/files), and `.env` configuration.
+2. **Package Archive:** Compresses database dump, `rustfs-data` (attachments/files), and `.env` configuration.
 3. **AES-256 Symmetric Encryption:** Encrypts the entire archive using `gpg` with `BACKUP_ENCRYPTION_PASSPHRASE`.
 4. **Google Drive Sync:** Uploads the encrypted archive to your Google Drive remote using `rclone`.
 5. **Retention Policy:** Automatically deletes local and Google Drive backups older than `BACKUP_RETENTION_DAYS` (default: 30 days).
@@ -357,7 +357,7 @@ Check for configuration errors, missing environment variables, or permission den
 **Permission denied errors:**
 Ensure all bind mount directories are owned by your UID/GID:
 ```bash
-chown -R $(id -u):$(id -g) postgres-data dragonfly-data minio-data \
+chown -R $(id -u):$(id -g) postgres-data dragonfly-data rustfs-data \
   appflowy-web-html appflowy-web-dist admin-frontend-app
 ```
 Also verify `docker-compose.yml` has the correct `user:` value matching your UID/GID.

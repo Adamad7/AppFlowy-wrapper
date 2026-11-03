@@ -157,7 +157,7 @@ if [ "$UPGRADE_MODE" = false ]; then
     info "Generating secure passwords..."
     POSTGRES_PASSWORD=$(openssl rand -hex 24)
     DRAGONFLY_PASSWORD=$(openssl rand -hex 24)
-    MINIO_ROOT_PASSWORD=$(openssl rand -hex 24)
+    RUSTFS_SECRET_KEY=$(openssl rand -hex 24)
     GOTRUE_JWT_SECRET=$(openssl rand -hex 32)
 fi
 
@@ -190,7 +190,7 @@ done
 # 6. Create data directories
 # ---------------------------------------------------------------------------
 info "Creating data directories..."
-mkdir -p postgres-data dragonfly-data minio-data
+mkdir -p postgres-data dragonfly-data rustfs-data
 
 # ---------------------------------------------------------------------------
 # 7. Generate .env (first-run only — before pull to avoid compose warnings)
@@ -203,7 +203,7 @@ if [ "$UPGRADE_MODE" = false ]; then
     APPFLOWY_WEB_VERSION="${APPFLOWY_WEB_VERSION:-0.10.5}"
     POSTGRES_VERSION="${POSTGRES_VERSION:-pg18}"
     DRAGONFLY_VERSION="${DRAGONFLY_VERSION:-v1.36.0}"
-    MINIO_VERSION="${MINIO_VERSION:-RELEASE.2025-09-07T16-13-09Z}"
+    RUSTFS_VERSION="${RUSTFS_VERSION:-latest}"
     ANGIE_VERSION="${ANGIE_VERSION:-1.11.3-alpine}"
     BACKUP_ENCRYPTION_PASSPHRASE=$(openssl rand -hex 24)
 
@@ -220,7 +220,7 @@ APPFLOWY_VERSION=${APPFLOWY_VERSION}
 APPFLOWY_WEB_VERSION=${APPFLOWY_WEB_VERSION}
 POSTGRES_VERSION=${POSTGRES_VERSION}
 DRAGONFLY_VERSION=${DRAGONFLY_VERSION}
-MINIO_VERSION=${MINIO_VERSION}
+RUSTFS_VERSION=${RUSTFS_VERSION}
 ANGIE_VERSION=${ANGIE_VERSION}
 
 # -----------------------------------------------------------------------------
@@ -258,16 +258,16 @@ DRAGONFLY_PASSWORD="${DRAGONFLY_PASSWORD}"
 APPFLOWY_REDIS_URI=redis://default:\${DRAGONFLY_PASSWORD}@dragonfly:6379
 
 # -----------------------------------------------------------------------------
-# MinIO (S3-compatible object storage)
+# RustFS (High-performance S3-compatible object storage in Rust)
 # -----------------------------------------------------------------------------
-MINIO_ROOT_USER=minio_admin
-MINIO_ROOT_PASSWORD="${MINIO_ROOT_PASSWORD}"
+RUSTFS_ACCESS_KEY=rustfs_admin
+RUSTFS_SECRET_KEY="${RUSTFS_SECRET_KEY}"
 
 APPFLOWY_S3_USE_MINIO=true
-APPFLOWY_S3_MINIO_URL=http://minio:9000
+APPFLOWY_S3_MINIO_URL=http://rustfs:9000
 APPFLOWY_S3_CREATE_BUCKET=true
-APPFLOWY_S3_ACCESS_KEY=\${MINIO_ROOT_USER}
-APPFLOWY_S3_SECRET_KEY=\${MINIO_ROOT_PASSWORD}
+APPFLOWY_S3_ACCESS_KEY=\${RUSTFS_ACCESS_KEY}
+APPFLOWY_S3_SECRET_KEY=\${RUSTFS_SECRET_KEY}
 APPFLOWY_S3_BUCKET=appflowy
 APPFLOWY_S3_REGION=us-east-1
 APPFLOWY_S3_PRESIGNED_URL_ENDPOINT=\${APPFLOWY_BASE_URL}/minio-api
@@ -404,7 +404,7 @@ docker rm "$cid" >/dev/null
 # ---------------------------------------------------------------------------
 info "Setting ownership to ${CURRENT_UID}:${CURRENT_GID}..."
 chown -R "${CURRENT_UID}:${CURRENT_GID}" \
-    postgres-data dragonfly-data minio-data \
+    postgres-data dragonfly-data rustfs-data \
     appflowy-web-html appflowy-web-dist admin-frontend-app
 
 # ---------------------------------------------------------------------------
@@ -419,7 +419,7 @@ if [ "$UPGRADE_MODE" = false ]; then
     printf '\033[1mGenerated credentials (save these — they will not be shown again):\033[0m\n'
     printf '  PostgreSQL password: %s\n' "$POSTGRES_PASSWORD"
     printf '  Dragonfly password:  %s\n' "$DRAGONFLY_PASSWORD"
-    printf '  MinIO password:      %s\n' "$MINIO_ROOT_PASSWORD"
+    printf '  RustFS secret key:   %s\n' "$RUSTFS_SECRET_KEY"
     printf '  JWT secret:          %s\n' "$GOTRUE_JWT_SECRET"
     if [ "$ADMIN_PW_GENERATED" = true ]; then
         printf '  Admin password:      %s\n' "$GOTRUE_ADMIN_PASSWORD"

@@ -112,26 +112,29 @@ services:
           cpus: "0.25"
 
   # ---------------------------------------------------------------------------
-  # MinIO (S3-compatible object storage)
+  # RustFS (High-performance S3-compatible object storage in Rust)
   # ---------------------------------------------------------------------------
-  minio:
-    image: minio/minio:${MINIO_VERSION:-RELEASE.2025-09-07T16-13-09Z}
-    container_name: appflowy-minio
+  rustfs:
+    image: rustfs/rustfs:${RUSTFS_VERSION:-latest}
+    container_name: appflowy-rustfs
     user: "1000:1000"
-    command: server /data
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: ":9000"
+      RUSTFS_CONSOLE_ENABLE: "false"
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
     volumes:
-      - ./minio-data:/data
+      - ./rustfs-data:/data
     networks:
       - appflowy-storage
       - appflowy-frontend
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
       interval: 5s
       timeout: 5s
       retries: 12
+      start_period: 20s
     cap_drop:
       - ALL
     security_opt:
@@ -148,11 +151,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 1G
           cpus: "2"
           pids: 150
         reservations:
-          memory: 256M
+          memory: 128M
           cpus: "0.25"
 
   # ---------------------------------------------------------------------------
@@ -283,7 +286,7 @@ services:
         condition: service_healthy
       dragonfly:
         condition: service_healthy
-      minio:
+      rustfs:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl --fail http://127.0.0.1:8000/api/health || exit 1"]
@@ -484,7 +487,7 @@ services:
         condition: service_healthy
       admin_frontend:
         condition: service_started
-      minio:
+      rustfs:
         condition: service_healthy
     read_only: true
     cap_drop:

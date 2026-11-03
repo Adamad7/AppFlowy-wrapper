@@ -86,10 +86,12 @@ if [ "$DB_SIZE" -lt 50 ]; then
 fi
 log "Database dump completed (${DB_SIZE} bytes)."
 
-# 3.2. Package into tar.gz (database + minio-data + .env)
-log "Archiving database, minio-data, and .env configuration..."
+# 3.2. Package into tar.gz (database + storage + .env)
+log "Archiving database, storage data, and .env configuration..."
 TAR_ARGS=("-czf" "$TMP_DIR/$ARCHIVE_NAME" "-C" "$TMP_DIR" "database.sql" "-C" "$PROJECT_DIR" ".env")
-if [ -d "$PROJECT_DIR/minio-data" ]; then
+if [ -d "$PROJECT_DIR/rustfs-data" ]; then
+    TAR_ARGS+=("-C" "$PROJECT_DIR" "rustfs-data")
+elif [ -d "$PROJECT_DIR/minio-data" ]; then
     TAR_ARGS+=("-C" "$PROJECT_DIR" "minio-data")
 fi
 

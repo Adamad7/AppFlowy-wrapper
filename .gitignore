@@ -3,6 +3,8 @@
 postgres-data/
 dragonfly-data/
 minio-data/
+rustfs-data/
+backups/
 appflowy-web-html/
 appflowy-web-dist/
 admin-frontend-app/
