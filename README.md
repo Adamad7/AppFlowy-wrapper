@@ -40,11 +40,11 @@ Internet -> Reverse Proxy (TLS) -> 127.0.0.1:8025 -> Angie -> AppFlowy Services
 | **postgres** | `pgvector/pgvector` | pg18 | Database with vector search (AI features) |
 | **dragonfly** | `dragonflydb/dragonfly` | v1.36.0 | Redis-compatible cache (password-protected) |
 | **rustfs** | `rustfs/rustfs` | latest | High-performance S3-compatible object storage in Rust |
-| **gotrue** | `appflowyinc/gotrue` | 0.12.0 | Authentication (signup disabled by default) |
-| **appflowy_cloud** | `appflowyinc/appflowy_cloud` | 0.12.0 | Backend API + WebSocket server |
-| **appflowy_worker** | `appflowyinc/appflowy_worker` | 0.12.0 | Background tasks (imports, jobs) |
-| **appflowy_web** | `appflowyinc/appflowy_web` | 0.10.5 | Web UI (nginx + Node.js SSR) |
-| **admin_frontend** | `appflowyinc/admin_frontend` | 0.12.0 | Admin dashboard (Node.js) |
+| **gotrue** | `appflowyinc/gotrue` | 0.18.11 | Authentication (signup disabled by default) |
+| **appflowy_cloud** | `appflowyinc/appflowy_cloud` | 0.19.11 | Backend API + WebSocket server |
+| **appflowy_worker** | `appflowyinc/appflowy_worker` | 0.19.11 | Background tasks (imports, jobs) |
+| **appflowy_web** | `appflowyinc/appflowy_web` | 0.19.11 | Web UI (nginx + Node.js SSR) |
+| **admin_frontend** | `appflowyinc/admin_frontend` | latest | Admin dashboard (Node.js) |
 | **angie** | `angie` | 1.11.3-alpine | Internal reverse proxy |
 
 All images are pinned to exact versions with SHA256 digest verification. See [SECURITY.md](SECURITY.md#pinned-image-versions-with-sha256-digest-verification) for why this matters.

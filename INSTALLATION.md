@@ -246,12 +246,11 @@ bash update.sh
 ```
 
 The script will:
-1. Query official Docker Hub releases for `appflowyinc/appflowy_cloud`.
-2. Display an interactive menu with available versions (the latest version is default).
-3. Check and match the companion `appflowyinc/appflowy_web` version.
-4. Create an automatic pre-update safety backup of PostgreSQL.
-5. Update version variables in `.env`.
-6. Pull new images, re-extract frontend assets, and restart the stack (`docker compose up -d`).
+1. Query official Docker Hub releases for each individual service (`appflowy_cloud`, `appflowy_web`, `gotrue`, `admin_frontend`).
+2. Display interactive menus allowing you to select versions for each service independently (with latest releases highlighted).
+3. Create an automatic pre-update safety backup of PostgreSQL.
+4. Update decoupled version variables in `.env`.
+5. Pull new images, safely re-extract frontend assets, and restart the stack (`docker compose up -d`).
 
 ### Manual Upgrade
 
@@ -259,8 +258,10 @@ Alternatively, edit version numbers in `.env`:
 
 ```bash
 # In .env
-APPFLOWY_VERSION=0.13.0
-APPFLOWY_WEB_VERSION=0.11.0
+APPFLOWY_CLOUD_VERSION=0.19.11
+APPFLOWY_WEB_VERSION=0.19.11
+GOTRUE_VERSION=0.18.11
+ADMIN_FRONTEND_VERSION=latest
 ```
 
 Then run `bash setup.sh && docker compose up -d`.

@@ -199,8 +199,10 @@ if [ "$UPGRADE_MODE" = false ]; then
     info "Generating .env..."
 
     # Default image versions
-    APPFLOWY_VERSION="${APPFLOWY_VERSION:-0.12.0}"
-    APPFLOWY_WEB_VERSION="${APPFLOWY_WEB_VERSION:-0.10.5}"
+    APPFLOWY_CLOUD_VERSION="${APPFLOWY_CLOUD_VERSION:-${APPFLOWY_VERSION:-0.19.11}}"
+    APPFLOWY_WEB_VERSION="${APPFLOWY_WEB_VERSION:-0.19.11}"
+    GOTRUE_VERSION="${GOTRUE_VERSION:-0.18.11}"
+    ADMIN_FRONTEND_VERSION="${ADMIN_FRONTEND_VERSION:-latest}"
     POSTGRES_VERSION="${POSTGRES_VERSION:-pg18}"
     DRAGONFLY_VERSION="${DRAGONFLY_VERSION:-v1.36.0}"
     RUSTFS_VERSION="${RUSTFS_VERSION:-latest}"
@@ -216,8 +218,10 @@ if [ "$UPGRADE_MODE" = false ]; then
 # -----------------------------------------------------------------------------
 # Image Versions
 # -----------------------------------------------------------------------------
-APPFLOWY_VERSION=${APPFLOWY_VERSION}
+APPFLOWY_CLOUD_VERSION=${APPFLOWY_CLOUD_VERSION}
 APPFLOWY_WEB_VERSION=${APPFLOWY_WEB_VERSION}
+GOTRUE_VERSION=${GOTRUE_VERSION}
+ADMIN_FRONTEND_VERSION=${ADMIN_FRONTEND_VERSION}
 POSTGRES_VERSION=${POSTGRES_VERSION}
 DRAGONFLY_VERSION=${DRAGONFLY_VERSION}
 RUSTFS_VERSION=${RUSTFS_VERSION}
@@ -376,27 +380,30 @@ info "Extracting container assets..."
 rm -rf appflowy-web-html appflowy-web-dist admin-frontend-app
 
 # Resolve image tags from .env (with fallback)
-EXTRACT_APPFLOWY_VER="0.12.0"
-EXTRACT_WEB_VER="0.10.5"
+EXTRACT_WEB_VER="0.19.11"
+EXTRACT_ADMIN_VER="latest"
 if [ -f .env ]; then
-    VAL_VER=$(grep -E '^[[:space:]]*APPFLOWY_VERSION=' .env | cut -d'=' -f2- | tr -d '"'\'' ' || true)
     VAL_WEB=$(grep -E '^[[:space:]]*APPFLOWY_WEB_VERSION=' .env | cut -d'=' -f2- | tr -d '"'\'' ' || true)
-    [ -n "$VAL_VER" ] && EXTRACT_APPFLOWY_VER="$VAL_VER"
+    VAL_ADMIN=$(grep -E '^[[:space:]]*ADMIN_FRONTEND_VERSION=' .env | cut -d'=' -f2- | tr -d '"'\'' ' || true)
+    [ -z "$VAL_ADMIN" ] && VAL_ADMIN=$(grep -E '^[[:space:]]*APPFLOWY_VERSION=' .env | cut -d'=' -f2- | tr -d '"'\'' ' || true)
     [ -n "$VAL_WEB" ] && EXTRACT_WEB_VER="$VAL_WEB"
+    [ -n "$VAL_ADMIN" ] && EXTRACT_ADMIN_VER="$VAL_ADMIN"
 fi
 WEB_IMAGE="appflowyinc/appflowy_web:${EXTRACT_WEB_VER}"
-ADMIN_IMAGE="appflowyinc/admin_frontend:${EXTRACT_APPFLOWY_VER}"
+ADMIN_IMAGE="appflowyinc/admin_frontend:${EXTRACT_ADMIN_VER}"
 
 # AppFlowy Web
-cid=$(docker create "$WEB_IMAGE")
-docker cp "$cid:/usr/share/nginx/html" ./appflowy-web-html
-docker cp "$cid:/app/dist" ./appflowy-web-dist
+info "Extracting AppFlowy Web assets from ${WEB_IMAGE}..."
+cid=$(docker create "$WEB_IMAGE" 2>/dev/null) || error "Failed to create container from $WEB_IMAGE. Check if the image and tag exist."
+docker cp "$cid:/usr/share/nginx/html" ./appflowy-web-html || { docker rm "$cid" >/dev/null; error "Failed to extract /usr/share/nginx/html from $WEB_IMAGE."; }
+docker cp "$cid:/app/dist" ./appflowy-web-dist || { docker rm "$cid" >/dev/null; error "Failed to extract /app/dist from $WEB_IMAGE."; }
 docker rm "$cid" >/dev/null
 
 # Admin Frontend
-cid=$(docker create "$ADMIN_IMAGE")
+info "Extracting Admin Frontend assets from ${ADMIN_IMAGE}..."
+cid=$(docker create "$ADMIN_IMAGE" 2>/dev/null) || error "Failed to create container from $ADMIN_IMAGE. Check if the image and tag exist."
 mkdir -p ./admin-frontend-app
-docker cp "$cid:/app/." ./admin-frontend-app/
+docker cp "$cid:/app/." ./admin-frontend-app/ || { docker rm "$cid" >/dev/null; error "Failed to extract /app from $ADMIN_IMAGE."; }
 docker rm "$cid" >/dev/null
 
 # ---------------------------------------------------------------------------

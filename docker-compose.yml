@@ -162,7 +162,7 @@ services:
   # GoTrue (authentication)
   # ---------------------------------------------------------------------------
   gotrue:
-    image: appflowyinc/gotrue:${APPFLOWY_VERSION:-0.12.0}
+    image: appflowyinc/gotrue:${GOTRUE_VERSION:-${APPFLOWY_VERSION:-0.18.11}}
     container_name: appflowy-gotrue
     user: "1000:1000"
     environment:
@@ -240,7 +240,7 @@ services:
   # AppFlowy Cloud (backend API + WebSocket)
   # ---------------------------------------------------------------------------
   appflowy_cloud:
-    image: appflowyinc/appflowy_cloud:${APPFLOWY_VERSION:-0.12.0}
+    image: appflowyinc/appflowy_cloud:${APPFLOWY_CLOUD_VERSION:-${APPFLOWY_VERSION:-0.19.11}}
     container_name: appflowy-cloud
     user: "1000:1000"
     environment:
@@ -321,7 +321,7 @@ services:
   # AppFlowy Worker (background tasks)
   # ---------------------------------------------------------------------------
   appflowy_worker:
-    image: appflowyinc/appflowy_worker:${APPFLOWY_VERSION:-0.12.0}
+    image: appflowyinc/appflowy_worker:${APPFLOWY_CLOUD_VERSION:-${APPFLOWY_VERSION:-0.19.11}}
     container_name: appflowy-worker
     user: "1000:1000"
     environment:
@@ -380,7 +380,7 @@ services:
   # AppFlowy Web (web UI) - custom nginx.conf for non-root operation
   # ---------------------------------------------------------------------------
   appflowy_web:
-    image: appflowyinc/appflowy_web:${APPFLOWY_WEB_VERSION:-0.10.5}
+    image: appflowyinc/appflowy_web:${APPFLOWY_WEB_VERSION:-0.19.11}
     container_name: appflowy-web
     user: "1000:1000"
     environment:
@@ -429,7 +429,7 @@ services:
   # Admin Frontend (admin dashboard)
   # ---------------------------------------------------------------------------
   admin_frontend:
-    image: appflowyinc/admin_frontend:${APPFLOWY_VERSION:-0.12.0}
+    image: appflowyinc/admin_frontend:${ADMIN_FRONTEND_VERSION:-${APPFLOWY_VERSION:-latest}}
     container_name: appflowy-admin
     user: "1000:1000"
     environment:
